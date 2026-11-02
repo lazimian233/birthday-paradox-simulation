@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="生日悖论概率实验：通过公式、随机实验与动态模拟理解为什么23人中至少两人生日相同的概率超过50%。">
+  <title>生日悖论：为什么23个人中有两人生日相同的概率会超过50%？</title>
+  <style>
+    :root {
+      --cream: #f7f1e5;
+      --paper: #fffdf8;
+      --paper-soft: #fbf7ee;
+      --forest: #173f35;
+      --green: #2f6b58;
+      --sage: #86a98e;
+      --mint: #dceadf;
+      --lime: #c8d99b;
+      --coral: #e78568;
+      --gold: #d8ad56;
+      --ink: #20342e;
+      --muted: #65736e;
+      --line: #d9dfd5;
+      --shadow: 0 18px 48px rgba(47, 68, 57, 0.10);
+      --radius-lg: 30px;
+      --radius-md: 20px;
+      --radius-sm: 13px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(216, 173, 86, 0.15), transparent 24rem),
+        radial-gradient(circle at 88% 24%, rgba(134, 169, 142, 0.18), transparent 28rem),
+        var(--cream);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+      line-height: 1.7;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .skip-link {
+      position: fixed;
+      top: -80px;
+      left: 16px;
+      z-index: 1000;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: white;
+      background: var(--forest);
+      transition: top 0.2s ease;
+    }
+
+    .skip-link:focus { top: 16px; }
+
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(23, 63, 53, 0.08);
+      background: rgba(247, 241, 229, 0.88);
+      backdrop-filter: blur(16px);
+    }
+
+    .nav-inner {
+      width: min(var(--max), calc(100% - 36px));
+      min-height: 64px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: white;
+      background: var(--green);
+      box-shadow: 0 8px 18px rgba(47, 107, 88, 0.22);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-links::-webkit-scrollbar { display: none; }
+
+    .nav-links a {
+      white-space: nowrap;
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus-visible {
+      color: var(--forest);
+      background: rgba(134, 169, 142, 0.16);
+      outline: none;
+    }
+
+    .hero {
+      width: min(var(--max), calc(100% - 36px));
+      min-height: 720px;
+      margin: 0 auto;
+      padding: 80px 0 54px;
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      align-items: center;
+      gap: clamp(38px, 7vw, 90px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 20px;
+      padding: 7px 13px;
+      border: 1px solid rgba(47, 107, 88, 0.16);
+      border-radius: 999px;
+      color: var(--green);
+      background: rgba(255, 253, 248, 0.7);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .eyebrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 0 0 0 4px rgba(231, 133, 104, 0.14);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 24px;
+      color: var(--forest);
+      font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(2.65rem, 5.6vw, 5.4rem);
+      font-weight: 700;
+      line-height: 1.09;
+      letter-spacing: -0.045em;
+    }
+
+    h1 .highlight {
+      position: relative;
+      display: inline-block;
+      color: var(--coral);
+    }
+
+    h1 .highlight::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 2px;
+      left: 0;
+      height: 11px;
+      border-radius: 999px;
+      background: rgba(216, 173, 86, 0.30);
+      transform: rotate(-1.5deg);
+      z-index: -1;
+    }
+
+    .hero-copy > p {
+      max-width: 680px;
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 1.6vw, 1.22rem);
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+    .btn {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 11px 19px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { color: white; background: var(--forest); box-shadow: 0 12px 24px rgba(23, 63, 53, 0.20); }
+    .btn-secondary { color: var(--forest); border-color: rgba(23, 63, 53, 0.14); background: var(--paper); }
+    .btn-coral { color: white; background: var(--coral); box-shadow: 0 12px 24px rgba(231, 133, 104, 0.22); }
+    .btn:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(216, 173, 86, 0.45); outline-offset: 3px; }
+
+    .hero-art {
+      position: relative;
+      min-height: 500px;
+      display: grid;
+      place-items: center;
+    }
+
+    .art-orbit {
+      position: absolute;
+      width: min(430px, 92vw);
+      aspect-ratio: 1;
+      border: 1px dashed rgba(47, 107, 88, 0.25);
+      border-radius: 50%;
+      animation: spin 36s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hero-calendar {
+      position: relative;
+      width: min(370px, 84vw);
+      padding: 26px;
+      border: 1px solid rgba(23, 63, 53, 0.10);
+      border-radius: 34px;
+      background: rgba(255, 253, 248, 0.96);
+      box-shadow: var(--shadow);
+      transform: rotate(-3deg);
+    }
+
+    .calendar-rings { display: flex; justify-content: space-around; margin: -39px 22px 15px; }
+    .calendar-rings span { width: 15px; height: 36px; border-radius: 999px; background: var(--forest); box-shadow: inset 0 -8px 0 rgba(255,255,255,0.14); }
+    .calendar-head { display: flex; align-items: baseline; justify-content: flex-start; gap: 14px; margin-bottom: 20px; }
+    .calendar-head strong { color: var(--forest); font-family: Georgia, serif; font-size: 3.8rem; line-height: 1; }
+    .calendar-head span { color: var(--green); font-weight: 800; }
+    .mini-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .mini-week span { aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px; color: #73827c; background: var(--paper-soft); font-size: 0.82rem; }
+    .mini-week .match { position: relative; color: white; background: var(--coral); font-weight: 800; box-shadow: 0 8px 15px rgba(231, 133, 104, 0.28); }
+    .mini-week .match::after { content: "×2"; position: absolute; top: -10px; right: -8px; padding: 1px 5px; border-radius: 99px; color: var(--forest); background: var(--lime); font-size: 0.62rem; }
+
+    .floating-icon {
+      position: absolute;
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(23, 63, 53, 0.10);
+      border-radius: 20px;
+      background: var(--paper);
+      box-shadow: 0 15px 30px rgba(47, 68, 57, 0.13);
+      animation: float 5s ease-in-out infinite;
+    }
+
+    .floating-icon svg { width: 45px; height: 45px; overflow: visible; }
+    .floating-icon .icon-stroke { fill: none; stroke: var(--forest); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .floating-icon .icon-coral { fill: var(--coral); }
+    .floating-icon .icon-green { fill: var(--sage); }
+    .floating-icon .icon-gold { fill: var(--gold); }
+    .floating-icon .icon-cream { fill: var(--paper); }
+
+    .float-cake { left: -5px; bottom: 68px; transform: rotate(-8deg); }
+    .float-balloon { top: 28px; right: -4px; animation-delay: -1.8s; }
+    .float-card { right: 16px; bottom: 20px; animation-delay: -3.3s; }
+
+    @keyframes float {
+      0%, 100% { translate: 0 0; }
+      50% { translate: 0 -12px; }
+    }
+
+    .section {
+      width: min(var(--max), calc(100% - 36px));
+      margin: 0 auto;
+      padding: 86px 0;
+      scroll-margin-top: 64px;
+    }
+
+    .section-shell {
+      padding: clamp(26px, 5vw, 58px);
+      border: 1px solid rgba(23, 63, 53, 0.08);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 253, 248, 0.82);
+      box-shadow: var(--shadow);
+    }
+
+    .section-green .section-shell { color: #eff8f1; background: var(--forest); }
+    .section-coral .section-shell { background: #f8e4d8; }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 38px;
+    }
+
+    .section-number {
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      color: var(--green);
+      background: var(--mint);
+      font-family: Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .section-green .section-number { color: var(--forest); background: var(--lime); }
+
+    h2 {
+      margin-bottom: 9px;
+      color: var(--forest);
+      font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(1.75rem, 3.5vw, 3rem);
+      line-height: 1.23;
+      letter-spacing: -0.025em;
+    }
+
+    .section-green h2 { color: white; }
+    .section-heading p { max-width: 780px; margin-bottom: 0; color: var(--muted); }
+    .section-green .section-heading p { color: #bcd0c7; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+
+    .info-card {
+      padding: 24px;
+      border: 1px solid rgba(23, 63, 53, 0.09);
+      border-radius: var(--radius-md);
+      background: var(--paper);
+    }
+
+    .info-card .icon-box {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      color: var(--forest);
+      background: var(--mint);
+      font-size: 1.35rem;
+    }
+
+    .info-card:nth-child(2) .icon-box { background: #f7e1d5; }
+    .info-card:nth-child(3) .icon-box { background: #f5e8bc; }
+    .info-card h3 { margin-bottom: 8px; color: var(--forest); font-size: 1.06rem; }
+    .info-card p { margin-bottom: 0; color: var(--muted); font-size: 0.93rem; }
+
+    .question-strip {
+      margin-top: 24px;
+      padding: 24px 26px;
+      display: flex;
+      align-items: center;
+      gap: 17px;
+      border-radius: var(--radius-md);
+      color: var(--forest);
+      background: var(--lime);
+    }
+
+    .question-strip strong { font-size: 1.06rem; }
+    .question-strip p { margin: 0; opacity: 0.78; }
+    .question-mark { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--forest); font-family: Georgia, serif; font-size: 1.45rem; font-weight: 800; }
+
+    .derivation { display: grid; gap: 14px; }
+    .derivation-step { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 15px; align-items: start; padding: 18px 20px; border-radius: 16px; background: rgba(255,255,255,0.08); }
+    .step-dot { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--forest); background: var(--lime); font-weight: 900; }
+    .derivation-step strong { display: block; margin-bottom: 3px; color: white; }
+    .derivation-step p { margin-bottom: 0; color: #bdd1c8; font-size: 0.93rem; }
+
+    .formula-card {
+      height: 100%;
+      padding: clamp(24px, 4vw, 38px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 24px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .formula-label { margin-bottom: 14px; color: var(--lime); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+    .formula { overflow-x: auto; padding: 12px 0 18px; color: white; font-family: Cambria, Georgia, serif; font-size: clamp(1.35rem, 3vw, 2.45rem); white-space: nowrap; }
+    .formula-card p { margin-bottom: 0; color: #bdd1c8; font-size: 0.92rem; }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+    .stat-chip { padding: 14px; border-radius: 14px; text-align: center; background: rgba(255,255,255,0.08); }
+    .stat-chip strong { display: block; color: white; font-family: Georgia, serif; font-size: 1.35rem; }
+    .stat-chip span { color: #a9c0b5; font-size: 0.73rem; }
+
+    .lab-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper-soft);
+    }
+
+    .control-group { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+    .control { min-width: 180px; }
+    .control label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: var(--muted); font-size: 0.8rem; font-weight: 800; }
+    .control output { color: var(--forest); font-weight: 900; }
+    input[type="range"] { width: 100%; accent-color: var(--green); }
+    select { min-height: 43px; padding: 8px 34px 8px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink); background: white; }
+
+    .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; color: var(--green); background: var(--mint); font-size: 0.8rem; font-weight: 900; }
+    .status-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .status-pill.match { color: #a8432d; background: #f7ded6; }
+
+    .single-layout { display: grid; grid-template-columns: 0.72fr 1.28fr; gap: 22px; }
+    .people-panel, .calendar-panel { min-width: 0; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); }
+    .panel-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .panel-title h3 { margin: 0; color: var(--forest); font-size: 1rem; }
+
+    .people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; max-height: 480px; overflow: auto; padding-right: 3px; }
+    .person-card { position: relative; padding: 14px 10px 12px; border: 1px solid var(--line); border-radius: 14px; text-align: center; background: var(--paper-soft); }
+    .person-card.duplicate { border-color: rgba(231, 133, 104, 0.55); background: #fbe8e1; box-shadow: inset 0 0 0 2px rgba(231, 133, 104, 0.08); }
+    .avatar { width: 36px; height: 36px; display: grid; place-items: center; margin: 0 auto 7px; border-radius: 50%; color: white; background: var(--green); font-size: 0.82rem; font-weight: 900; }
+    .person-card.duplicate .avatar { background: var(--coral); }
+    .person-card strong { display: block; color: var(--forest); font-size: 0.87rem; }
+    .person-card small { color: var(--muted); font-size: 0.73rem; }
+
+    .year-calendar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-height: 480px; overflow: auto; padding-right: 3px; }
+    .month { padding: 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper-soft); }
+    .month h4 { margin: 0 0 8px; color: var(--forest); font-size: 0.78rem; }
+    .month-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .day { position: relative; aspect-ratio: 1; display: grid; place-items: center; border-radius: 4px; color: #8c9893; background: white; font-size: clamp(0.48rem, 0.65vw, 0.65rem); }
+    .day.has-birthday { color: var(--forest); background: var(--mint); font-weight: 800; }
+    .day.duplicate { color: white; background: var(--coral); box-shadow: 0 4px 9px rgba(231, 133, 104, 0.25); }
+    .day-count { position: absolute; top: -5px; right: -5px; min-width: 14px; height: 14px; display: grid; place-items: center; padding: 0 3px; border-radius: 999px; color: var(--forest); background: var(--lime); font-size: 0.48rem; font-weight: 900; }
+
+    .simulation-layout { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 22px; }
+    .sim-controls { padding: 26px; border-radius: 22px; background: var(--paper); }
+    .sim-controls .control { min-width: 0; margin-bottom: 24px; }
+    .sim-controls select { width: 100%; }
+    .sim-controls .btn { width: 100%; }
+    .progress-track { height: 9px; overflow: hidden; margin-top: 14px; border-radius: 999px; background: #e8ece7; }
+    .progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--lime)); transition: width 0.25s ease; }
+
+    .sim-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .result-card { min-height: 140px; padding: 22px; border: 1px solid rgba(23, 63, 53, 0.08); border-radius: 20px; background: var(--paper); }
+    .result-card.accent { color: white; background: var(--green); }
+    .result-card span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 0.78rem; font-weight: 800; }
+    .result-card.accent span { color: #c5d8cf; }
+    .result-card strong { display: block; color: var(--forest); font-family: Georgia, serif; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.1; }
+    .result-card.accent strong { color: white; }
+    .result-card small { display: block; margin-top: 8px; color: var(--muted); }
+    .result-card.accent small { color: #d4e0da; }
+
+    .charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .chart-card { min-width: 0; padding: 22px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .chart-head h3 { margin: 0 0 4px; color: var(--forest); font-size: 1rem; }
+    .chart-head p { margin: 0; color: var(--muted); font-size: 0.78rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; color: var(--muted); font-size: 0.72rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 9px; height: 9px; display: inline-block; border-radius: 50%; background: var(--green); }
+    .legend .coral { background: var(--coral); }
+    .legend .gold { background: var(--gold); }
+    .chart-wrap { position: relative; height: 280px; }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .explanation-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; }
+    .narrative-card { padding: 28px; border-radius: 22px; background: white; }
+    .narrative-card h3 { color: var(--forest); font-size: 1.1rem; }
+    .narrative-card p { color: #4d5f58; }
+    .narrative-card p:last-child { margin-bottom: 0; }
+    .data-sentence { padding: 20px; border-left: 5px solid var(--coral); border-radius: 0 14px 14px 0; background: rgba(255,255,255,0.55); color: var(--forest); font-weight: 700; }
+    .explanation-list { display: grid; gap: 12px; }
+    .explanation-item { padding: 18px 20px; border-radius: 17px; background: rgba(255,255,255,0.56); }
+    .explanation-item strong { display: block; margin-bottom: 3px; color: var(--forest); }
+    .explanation-item p { margin: 0; color: #64736d; font-size: 0.9rem; }
+
+    .pair-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 28px; align-items: center; }
+    .pair-controls { padding: 26px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper-soft); }
+    .pair-number { margin: 18px 0 8px; color: var(--coral); font-family: Georgia, serif; font-size: clamp(3.5rem, 8vw, 6.5rem); font-weight: 700; line-height: 1; }
+    .pair-formula { color: var(--muted); font-family: Cambria, Georgia, serif; font-size: 1.2rem; }
+    .pair-stage { position: relative; min-height: 360px; display: grid; place-items: center; border-radius: 24px; background: var(--forest); overflow: hidden; }
+    .pair-ring { position: relative; width: 280px; height: 280px; border: 1px dashed rgba(255,255,255,0.22); border-radius: 50%; }
+    .pair-dot { position: absolute; width: 18px; height: 18px; margin: -9px; border: 3px solid var(--forest); border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 2px rgba(200,217,155,0.3); }
+    .pair-line { position: absolute; left: 50%; top: 50%; width: 1px; height: 50%; transform-origin: top center; background: linear-gradient(rgba(231,133,104,0.8), rgba(231,133,104,0.05)); }
+    .pair-caption { position: absolute; right: 20px; bottom: 18px; left: 20px; color: #bcd0c7; text-align: center; font-size: 0.78rem; }
+
+    .summary-layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 34px; align-items: center; }
+    .takeaways { display: grid; gap: 13px; }
+    .takeaway { display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 14px; align-items: start; }
+    .takeaway span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--forest); background: var(--lime); font-weight: 900; }
+    .takeaway strong { display: block; margin-bottom: 2px; color: white; }
+    .takeaway p { margin: 0; color: #bcd0c7; font-size: 0.9rem; }
+    .final-card { padding: 34px; border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; background: rgba(255,255,255,0.08); text-align: center; }
+    .final-card .big { display: block; margin: 8px 0; color: var(--lime); font-family: Georgia, serif; font-size: clamp(3.5rem, 8vw, 6rem); line-height: 1; }
+    .final-card p { margin: 0; color: #c5d8cf; }
+
+    footer { padding: 24px 18px 48px; color: var(--muted); text-align: center; font-size: 0.82rem; }
+
+    .noscript { width: min(760px, calc(100% - 36px)); margin: 20px auto; padding: 18px; border-radius: 14px; color: #7e321f; background: #f9dfd6; text-align: center; }
+
+    @media (max-width: 980px) {
+      .nav-links { display: none; }
+      .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 58px; }
+      .hero-art { min-height: 460px; }
+      .single-layout, .simulation-layout, .explanation-grid, .pair-layout, .summary-layout { grid-template-columns: 1fr; }
+      .year-calendar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .hero, .section { width: min(100% - 24px, var(--max)); }
+      .hero { padding-top: 42px; }
+      .hero-art { min-height: 400px; }
+      .floating-icon { width: 56px; height: 56px; font-size: 1.55rem; }
+      .section { padding: 52px 0; }
+      .section-shell { border-radius: 24px; }
+      .section-heading { grid-template-columns: 1fr; gap: 12px; }
+      .section-number { width: 52px; height: 52px; border-radius: 16px; }
+      .grid-2, .grid-3, .charts-grid, .sim-results { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: auto; }
+      .stat-row { grid-template-columns: 1fr; }
+      .lab-toolbar { align-items: stretch; }
+      .control-group { width: 100%; }
+      .control { flex: 1 1 100%; }
+      .lab-toolbar .btn { width: 100%; }
+      .year-calendar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chart-head { flex-direction: column; }
+      .question-strip { align-items: flex-start; }
+      .pair-stage { min-height: 320px; }
+      .pair-ring { width: 240px; height: 240px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <nav class="site-nav" aria-label="章节导航">
+    <div class="nav-inner">
+      <a class="brand" href="#top"><span class="brand-mark">🎂</span><span>生日悖论实验室</span></a>
+      <div class="nav-links">
+        <a href="#intro">实验介绍</a><a href="#theory">概率原理</a><a href="#single">单次实验</a><a href="#simulation">重复模拟</a><a href="#charts">数据图表</a><a href="#explanation">结果解释</a><a href="#pairs">配对探索</a><a href="#summary">总结</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="eyebrow-dot"></span>概率论 · 交互实验</div>
+      <h1>生日悖论：为什么<span class="highlight">23个人</span>中有两人生日相同的概率会超过50%？</h1>
+      <p>直觉会低估“配对”的增长速度。通过补事件公式、随机生日卡片、365 天日历和实时模拟，一步步看见这个反直觉结论如何发生。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#single">开始随机实验 <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="#theory">先看概率原理</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-label="生日主题日历插画">
+      <div class="art-orbit"></div>
+      <div class="hero-calendar">
+        <div class="calendar-rings"><span></span><span></span><span></span><span></span></div>
+        <div class="calendar-head"><strong>23</strong><span>人 · 超过 50%</span></div>
+        <div class="mini-week" aria-hidden="true">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+          <span>8</span><span>9</span><span>10</span><span class="match">11</span><span>12</span><span>13</span><span>14</span>
+          <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span>
+          <span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span>
+          <span>29</span><span>30</span><span>31</span>
+        </div>
+      </div>
+      <div class="floating-icon float-cake" aria-hidden="true">
+        <svg viewBox="0 0 52 52">
+          <path class="icon-coral" d="M10 25h32v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4Z"/>
+          <path class="icon-cream" d="M10 25h32v8c-3 0-3 4-6 4s-3-4-6-4-3 4-6 4-3-4-6-4-3 4-6 4Z"/>
+          <path class="icon-stroke" d="M10 25h32v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4Zm0 8c3 0 3 4 6 4s3-4 6-4 3 4 6 4 3-4 6-4 3 4 6 4M26 9v10m-3 0h6"/>
+          <path class="icon-gold" d="M26 4c3 3 4 5 4 7a4 4 0 0 1-8 0c0-2 1-4 4-7Z"/>
+        </svg>
+      </div>
+      <div class="floating-icon float-balloon" aria-hidden="true">
+        <svg viewBox="0 0 52 52">
+          <ellipse class="icon-green" cx="26" cy="19" rx="13" ry="16"/>
+          <path class="icon-stroke" d="M39 19c0 9-6 16-13 16s-13-7-13-16S19 3 26 3s13 7 13 16Zm-13 16 3 4h-6Zm0 4c-4 4 5 5 0 10"/>
+          <path d="M19 11c2-3 5-5 8-5" fill="none" stroke="#fffdf8" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+        </svg>
+      </div>
+      <div class="floating-icon float-card" aria-hidden="true">
+        <svg viewBox="0 0 52 52">
+          <path class="icon-gold" d="M7 13h38v29H7z"/>
+          <path class="icon-cream" d="m7 15 19 15 19-15v27H7Z"/>
+          <path class="icon-stroke" d="M7 13h38v29H7Zm0 2 19 15 19-15M7 42l14-16m24 16L31 26"/>
+          <path class="icon-coral" d="m18 10 1.2 2.6L22 14l-2.8 1.2L18 18l-1.2-2.8L14 14l2.8-1.4Zm18 8 .9 1.9 2.1.9-2.1.9L36 24l-.9-2.3-2.1-.9 2.1-.9Z"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <noscript><div class="noscript">本实验需要启用 JavaScript 才能运行随机模拟和绘制图表。</div></noscript>
+
+  <main id="main">
+    <section class="section" id="intro">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">01</div>
+          <div><h2>实验介绍与基本假设</h2><p>我们研究的事件是“至少两个人生日相同”，不是“恰好两个人生日相同”。先固定模型，才能让计算与模拟保持一致。</p></div>
+        </div>
+        <div class="grid-3">
+          <article class="info-card"><div class="icon-box">📅</div><h3>365 个等可能日期</h3><p>忽略闰年，将每个人的生日视为在一年 365 天中等概率、独立地出现。</p></article>
+          <article class="info-card"><div class="icon-box">👥</div><h3>相互独立</h3><p>一个人的生日不会改变另一个人的生日概率；不考虑季节性出生差异。</p></article>
+          <article class="info-card"><div class="icon-box">🎯</div><h3>目标事件</h3><p>只要小组中出现任意一组或多组同生日者，本轮实验就记为“发生重复”。</p></article>
+        </div>
+        <div class="question-strip"><div class="question-mark">?</div><div><strong>先猜一猜：需要多少人，概率才会超过 50%？</strong><p>答案不是 183 人，而是出乎意料的 23 人。</p></div></div>
+      </div>
+    </section>
+
+    <section class="section section-green" id="theory">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">02</div>
+          <div><h2>从补事件推导理论概率</h2><p>直接数“至少一对相同”很复杂；反过来先算“所有人生日都不同”，再用 1 减去它，会简单得多。</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="derivation">
+            <div class="derivation-step"><div class="step-dot">1</div><div><strong>第 1 个人</strong><p>任意生日都可以，因此与前人不重复的概率是 365/365。</p></div></div>
+            <div class="derivation-step"><div class="step-dot">2</div><div><strong>第 2 个人</strong><p>必须避开第 1 个人的生日，概率是 364/365。</p></div></div>
+            <div class="derivation-step"><div class="step-dot">3</div><div><strong>继续到第 n 个人</strong><p>依次避开已经出现的日期，将每一步概率相乘，得到“全部不同”的概率。</p></div></div>
+          </div>
+          <div class="formula-card">
+            <div class="formula-label">Complement Rule · 补事件</div>
+            <div class="formula" aria-label="P of n equals one minus product from k equals zero to n minus one of 365 minus k over 365">P(n) = 1 − ∏<sub>k=0</sub><sup>n−1</sup> (365−k) / 365</div>
+            <p>P(n) 表示 n 人中“至少两人生日相同”的概率。n = 23 时，理论值约为 0.5073。</p>
+            <div class="stat-row"><div class="stat-chip"><strong>22</strong><span>人时 47.57%</span></div><div class="stat-chip"><strong>23</strong><span>人时 50.73%</span></div><div class="stat-chip"><strong>50</strong><span>人时 97.04%</span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="single">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">03</div>
+          <div><h2>单次随机生日实验</h2><p>为每个人随机生成一个生日。人物卡片与全年日历同步显示；若某个日期出现两次或更多次，会用珊瑚色突出标记。</p></div>
+        </div>
+        <div class="lab-toolbar">
+          <div class="control-group"><div class="control"><label for="single-size">本轮人数 <output id="single-size-output">23 人</output></label><input id="single-size" type="range" min="2" max="60" value="23"></div><span class="status-pill" id="single-status">等待生成</span></div>
+          <button class="btn btn-coral" id="run-single" type="button">🎲 重新生成生日</button>
+        </div>
+        <div class="single-layout">
+          <div class="people-panel"><div class="panel-title"><h3>人物生日卡片</h3><span id="people-count">23 张</span></div><div class="people-grid" id="people-grid" aria-live="polite"></div></div>
+          <div class="calendar-panel"><div class="panel-title"><h3>365 天生日分布</h3><span>重复日期将高亮</span></div><div class="year-calendar" id="year-calendar"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-coral" id="simulation">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">04</div>
+          <div><h2>重复模拟：让频率靠近概率</h2><p>一次实验可能重复，也可能不重复。把同样的随机实验做很多次，“出现重复”的比例会逐渐靠近理论概率。</p></div>
+        </div>
+        <div class="simulation-layout">
+          <div class="sim-controls">
+            <div class="control"><label for="group-size">每组人数 <output id="group-size-output">23 人</output></label><input id="group-size" type="range" min="2" max="80" value="23"></div>
+            <div class="control"><label for="simulation-count">模拟次数</label><select id="simulation-count"><option value="100">100 次</option><option value="500">500 次</option><option value="1000" selected>1,000 次</option><option value="5000">5,000 次</option><option value="10000">10,000 次</option><option value="50000">50,000 次</option></select></div>
+            <button class="btn btn-primary" id="run-simulation" type="button">▶ 开始重复模拟</button>
+            <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>
+          </div>
+          <div class="sim-results" aria-live="polite">
+            <div class="result-card accent"><span>模拟概率</span><strong id="sim-probability">—</strong><small id="sim-count-label">等待实验</small></div>
+            <div class="result-card"><span>理论概率</span><strong id="theory-probability">50.73%</strong><small>由补事件公式计算</small></div>
+            <div class="result-card"><span>出现重复的轮数</span><strong id="duplicate-trials">—</strong><small id="non-duplicate-trials">未重复轮数：—</small></div>
+            <div class="result-card"><span>与理论值的差</span><strong id="probability-gap">—</strong><small>有限样本下通常不会恰好相等</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="charts">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">05</div>
+          <div><h2>把实验结果画出来</h2><p>三张图分别比较理论与模拟、展示人数增长带来的概率变化，以及观察模拟频率如何在重复试验中趋于稳定。</p></div>
+        </div>
+        <div class="charts-grid">
+          <article class="chart-card"><div class="chart-head"><div><h3>理论概率 vs 模拟概率</h3><p>当前人数与当前模拟批次</p></div><div class="legend"><span><i></i>理论</span><span><i class="coral"></i>模拟</span></div></div><div class="chart-wrap"><canvas id="comparison-chart" role="img" aria-label="理论概率与模拟概率柱状图"></canvas></div></article>
+          <article class="chart-card"><div class="chart-head"><div><h3>人数 vs 理论概率</h3><p>2 至 80 人的生日重复概率曲线</p></div><div class="legend"><span><i></i>理论曲线</span><span><i class="coral"></i>当前人数</span></div></div><div class="chart-wrap"><canvas id="theory-chart" role="img" aria-label="人数与理论概率折线图"></canvas></div></article>
+          <article class="chart-card wide"><div class="chart-head"><div><h3>累计模拟频率</h3><p>随着实验次数增加，累计频率围绕理论值波动并趋于稳定</p></div><div class="legend"><span><i class="coral"></i>累计频率</span><span><i class="gold"></i>理论值</span></div></div><div class="chart-wrap"><canvas id="cumulative-chart" role="img" aria-label="累计模拟频率折线图"></canvas></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-coral" id="explanation">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">06</div>
+          <div><h2>根据真实数据解释结果</h2><p>这里的文字会读取你刚刚运行的实验数据，自动更新，而不是预先填写一组看起来“很完美”的数字。</p></div>
+        </div>
+        <div class="explanation-grid">
+          <article class="narrative-card"><h3>本次实验怎么说？</h3><div class="data-sentence" id="dynamic-explanation">运行重复模拟后，这里会根据实际结果生成解释。</div><p id="variation-explanation">模拟次数越少，随机波动通常越明显；次数增加后，模拟频率一般会更接近理论概率。</p></article>
+          <div class="explanation-list">
+            <div class="explanation-item"><strong>为什么 23 人约为 50.73%？</strong><p>23 人全部生日不同的概率约为 49.27%，因此至少出现一对相同生日的概率是 1 − 49.27% = 50.73%。</p></div>
+            <div class="explanation-item"><strong>有限样本为什么会有偏差？</strong><p>模拟概率是随机样本的频率。即使模型正确，1,000 次实验也不必刚好得到 50.73%。</p></div>
+            <div class="explanation-item"><strong>“至少两人”包含哪些情况？</strong><p>既包括一对同生日，也包括三人同生日、两组不同的重复生日等所有存在重复的情况。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pairs">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">07</div>
+          <div><h2>配对数量为什么增长得这么快？</h2><p>我们不是拿每个人只和某个固定日期比较，而是在比较人群中的每一对人。n 个人可以形成 C(n,2) 对。</p></div>
+        </div>
+        <div class="pair-layout">
+          <div class="pair-controls">
+            <div class="control"><label for="pair-size">人数 n <output id="pair-size-output">23 人</output></label><input id="pair-size" type="range" min="2" max="60" value="23"></div>
+            <div class="pair-number" id="pair-count">253</div>
+            <div class="pair-formula" id="pair-formula">C(23, 2) = 23 × 22 ÷ 2 = 253 对</div>
+            <p>人数只增加到 23，但潜在配对已经有 253 对。这正是直觉容易低估重复概率的关键。</p>
+          </div>
+          <div class="pair-stage" aria-hidden="true"><div class="pair-ring" id="pair-ring"></div><div class="pair-caption" id="pair-caption">示意显示部分连线；实际共有 253 对</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-green" id="summary">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div class="section-number">08</div>
+          <div><h2>实验总结</h2><p>生日悖论并不违反概率规律，它“反直觉”是因为人的直觉不擅长估计快速增长的配对数量。</p></div>
+        </div>
+        <div class="summary-layout">
+          <div class="takeaways">
+            <div class="takeaway"><span>1</span><div><strong>补事件让计算变简单</strong><p>先算所有生日都不同，再用 1 减去这个概率。</p></div></div>
+            <div class="takeaway"><span>2</span><div><strong>23 人是跨过 50% 的临界点</strong><p>22 人约 47.57%，23 人约 50.73%。</p></div></div>
+            <div class="takeaway"><span>3</span><div><strong>模拟频率会在理论值附近波动</strong><p>样本越多，通常越能看出大数定律带来的稳定趋势。</p></div></div>
+            <div class="takeaway"><span>4</span><div><strong>核心是“至少一对”</strong><p>研究对象不是恰好两人相同，而是任何形式的生日重复。</p></div></div>
+          </div>
+          <div class="final-card"><div>23 人中的潜在配对数</div><span class="big">253</span><p>当比较对象从“人”变成“人对”，惊讶就有了解释。</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>生日悖论交互概率实验 · 所有模拟结果均由浏览器实时随机生成</footer>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const monthNames = ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"];
+      const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      const colors = {
+        forest: "#173f35",
+        green: "#2f6b58",
+        sage: "#86a98e",
+        mint: "#dceadf",
+        coral: "#e78568",
+        gold: "#d8ad56",
+        line: "#d9dfd5",
+        muted: "#65736e",
+        paper: "#fffdf8"
+      };
+
+      const elements = {
+        singleSize: document.querySelector("#single-size"),
+        singleSizeOutput: document.querySelector("#single-size-output"),
+        singleStatus: document.querySelector("#single-status"),
+        runSingle: document.querySelector("#run-single"),
+        peopleCount: document.querySelector("#people-count"),
+        peopleGrid: document.querySelector("#people-grid"),
+        yearCalendar: document.querySelector("#year-calendar"),
+        groupSize: document.querySelector("#group-size"),
+        groupSizeOutput: document.querySelector("#group-size-output"),
+        simulationCount: document.querySelector("#simulation-count"),
+        runSimulation: document.querySelector("#run-simulation"),
+        progressBar: document.querySelector("#progress-bar"),
+        simProbability: document.querySelector("#sim-probability"),
+        theoryProbability: document.querySelector("#theory-probability"),
+        duplicateTrials: document.querySelector("#duplicate-trials"),
+        nonDuplicateTrials: document.querySelector("#non-duplicate-trials"),
+        probabilityGap: document.querySelector("#probability-gap"),
+        simCountLabel: document.querySelector("#sim-count-label"),
+        dynamicExplanation: document.querySelector("#dynamic-explanation"),
+        variationExplanation: document.querySelector("#variation-explanation"),
+        comparisonChart: document.querySelector("#comparison-chart"),
+        theoryChart: document.querySelector("#theory-chart"),
+        cumulativeChart: document.querySelector("#cumulative-chart"),
+        pairSize: document.querySelector("#pair-size"),
+        pairSizeOutput: document.querySelector("#pair-size-output"),
+        pairCount: document.querySelector("#pair-count"),
+        pairFormula: document.querySelector("#pair-formula"),
+        pairRing: document.querySelector("#pair-ring"),
+        pairCaption: document.querySelector("#pair-caption")
+      };
+
+      const state = {
+        singleBirthdays: [],
+        simulation: null,
+        simulationRunId: 0,
+        resizeTimer: null
+      };
+
+      function randomDay() {
+        return Math.floor(Math.random() * 365);
+      }
+
+      function theoreticalProbability(groupSize) {
+        if (groupSize < 2) return 0;
+        if (groupSize > 365) return 1;
+        let allDifferent = 1;
+        for (let index = 0; index < groupSize; index += 1) {
+          allDifferent *= (365 - index) / 365;
+        }
+        return 1 - allDifferent;
+      }
+
+      function formatPercent(value, digits = 2) {
+        return `${(value * 100).toFixed(digits)}%`;
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat("zh-CN").format(value);
+      }
+
+      function dayToDate(dayIndex) {
+        let remaining = dayIndex;
+        for (let monthIndex = 0; monthIndex < monthDays.length; monthIndex += 1) {
+          if (remaining < monthDays[monthIndex]) {
+            return { monthIndex, day: remaining + 1, label: `${monthIndex + 1} 月 ${remaining + 1} 日` };
+          }
+          remaining -= monthDays[monthIndex];
+        }
+        return { monthIndex: 11, day: 31, label: "12 月 31 日" };
+      }
+
+      function birthdayCounts(birthdays) {
+        const counts = new Map();
+        birthdays.forEach((birthday) => counts.set(birthday, (counts.get(birthday) || 0) + 1));
+        return counts;
+      }
+
+      function renderPeople(birthdays, counts) {
+        const fragment = document.createDocumentFragment();
+        birthdays.forEach((birthday, index) => {
+          const date = dayToDate(birthday);
+          const card = document.createElement("article");
+          card.className = `person-card${counts.get(birthday) > 1 ? " duplicate" : ""}`;
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent = String(index + 1).padStart(2, "0");
+          const name = document.createElement("strong");
+          name.textContent = `第 ${index + 1} 人`;
+          const dateText = document.createElement("small");
+          dateText.textContent = date.label;
+          card.append(avatar, name, dateText);
+          fragment.append(card);
+        });
+        elements.peopleGrid.replaceChildren(fragment);
+        elements.peopleCount.textContent = `${birthdays.length} 张`;
+      }
+
+      function renderCalendar(counts) {
+        const fragment = document.createDocumentFragment();
+        let yearDay = 0;
+        monthDays.forEach((daysInMonth, monthIndex) => {
+          const month = document.createElement("section");
+          month.className = "month";
+          const title = document.createElement("h4");
+          title.textContent = monthNames[monthIndex];
+          const days = document.createElement("div");
+          days.className = "month-days";
+          for (let day = 1; day <= daysInMonth; day += 1) {
+            const count = counts.get(yearDay) || 0;
+            const cell = document.createElement("div");
+            cell.className = `day${count ? " has-birthday" : ""}${count > 1 ? " duplicate" : ""}`;
+            cell.textContent = day;
+            cell.title = `${monthIndex + 1} 月 ${day} 日：${count} 人`;
+            if (count > 1) {
+              const badge = document.createElement("span");
+              badge.className = "day-count";
+              badge.textContent = count;
+              cell.append(badge);
+            }
+            days.append(cell);
+            yearDay += 1;
+          }
+          month.append(title, days);
+          fragment.append(month);
+        });
+        elements.yearCalendar.replaceChildren(fragment);
+      }
+
+      function runSingleExperiment() {
+        const groupSize = Number(elements.singleSize.value);
+        const birthdays = Array.from({ length: groupSize }, randomDay);
+        const counts = birthdayCounts(birthdays);
+        const duplicateDates = [...counts.values()].filter((count) => count > 1);
+        state.singleBirthdays = birthdays;
+        renderPeople(birthdays, counts);
+        renderCalendar(counts);
+        elements.singleSizeOutput.textContent = `${groupSize} 人`;
+        if (duplicateDates.length) {
+          const duplicatePeople = duplicateDates.reduce((sum, count) => sum + count, 0);
+          elements.singleStatus.className = "status-pill match";
+          elements.singleStatus.textContent = `发现 ${duplicateDates.length} 个重复日期 · 涉及 ${duplicatePeople} 人`;
+        } else {
+          elements.singleStatus.className = "status-pill";
+          elements.singleStatus.textContent = "本轮没有重复生日";
+        }
+      }
+
+      function updateTheoryDisplay() {
+        const groupSize = Number(elements.groupSize.value);
+        const probability = theoreticalProbability(groupSize);
+        elements.groupSizeOutput.textContent = `${groupSize} 人`;
+        elements.theoryProbability.textContent = formatPercent(probability);
+        drawTheoryChart();
+        if (state.simulation && state.simulation.groupSize !== groupSize) {
+          elements.simCountLabel.textContent = "调整人数后请重新模拟";
+        }
+      }
+
+      function simulateTrial(groupSize, marks, trialMarker) {
+        for (let person = 0; person < groupSize; person += 1) {
+          const birthday = randomDay();
+          if (marks[birthday] === trialMarker) return true;
+          marks[birthday] = trialMarker;
+        }
+        return false;
+      }
+
+      function nextFrame() {
+        return new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+
+      async function runRepeatedSimulation() {
+        const runId = state.simulationRunId + 1;
+        state.simulationRunId = runId;
+        const groupSize = Number(elements.groupSize.value);
+        const totalTrials = Number(elements.simulationCount.value);
+        const theoretical = theoreticalProbability(groupSize);
+        const marks = new Uint32Array(365);
+        const sampleEvery = Math.max(1, Math.floor(totalTrials / 220));
+        const cumulative = [];
+        const chunkSize = totalTrials >= 10000 ? 1000 : 250;
+        let completed = 0;
+        let duplicates = 0;
+
+        elements.runSimulation.disabled = true;
+        elements.runSimulation.textContent = "模拟进行中…";
+        elements.progressBar.style.width = "0%";
+
+        while (completed < totalTrials) {
+          const chunkEnd = Math.min(totalTrials, completed + chunkSize);
+          for (let trial = completed + 1; trial <= chunkEnd; trial += 1) {
+            if (simulateTrial(groupSize, marks, trial)) duplicates += 1;
+            if (trial === 1 || trial % sampleEvery === 0 || trial === totalTrials) {
+              cumulative.push({ trial, frequency: duplicates / trial });
+            }
+          }
+          completed = chunkEnd;
+          elements.progressBar.style.width = `${(completed / totalTrials) * 100}%`;
+          elements.simProbability.textContent = formatPercent(duplicates / completed);
+          elements.simCountLabel.textContent = `已完成 ${formatNumber(completed)} / ${formatNumber(totalTrials)} 次`;
+          if (state.simulationRunId !== runId) return;
+          await nextFrame();
+        }
+
+        state.simulation = { groupSize, totalTrials, duplicates, theoretical, cumulative };
+        updateSimulationResults();
+        drawAllCharts();
+        elements.runSimulation.disabled = false;
+        elements.runSimulation.textContent = "↻ 再模拟一次";
+      }
+
+      function updateSimulationResults() {
+        const result = state.simulation;
+        if (!result) return;
+        const simulated = result.duplicates / result.totalTrials;
+        const gap = simulated - result.theoretical;
+        const absoluteGap = Math.abs(gap);
+        const direction = gap >= 0 ? "高" : "低";
+        const standardError = Math.sqrt(result.theoretical * (1 - result.theoretical) / result.totalTrials);
+        const commonRange = 1.96 * standardError;
+
+        elements.simProbability.textContent = formatPercent(simulated);
+        elements.theoryProbability.textContent = formatPercent(result.theoretical);
+        elements.duplicateTrials.textContent = formatNumber(result.duplicates);
+        elements.nonDuplicateTrials.textContent = `未重复轮数：${formatNumber(result.totalTrials - result.duplicates)}`;
+        elements.probabilityGap.textContent = `${gap >= 0 ? "+" : "−"}${(absoluteGap * 100).toFixed(2)} 个百分点`;
+        elements.simCountLabel.textContent = `${formatNumber(result.totalTrials)} 次真实随机实验`;
+
+        elements.dynamicExplanation.textContent = `本次将 ${result.groupSize} 人一组的实验重复 ${formatNumber(result.totalTrials)} 次，其中 ${formatNumber(result.duplicates)} 次出现了至少一组相同生日。模拟概率为 ${formatPercent(simulated)}，比理论值 ${formatPercent(result.theoretical)} ${direction} ${(absoluteGap * 100).toFixed(2)} 个百分点。`;
+
+        const rangeText = `按理论概率估算，${formatNumber(result.totalTrials)} 次实验的常见随机波动范围约为 ±${(commonRange * 100).toFixed(2)} 个百分点。`;
+        const assessment = absoluteGap <= commonRange
+          ? "本次偏差落在这个常见范围内，属于有限样本的正常波动。"
+          : "本次偏差超出这个近似范围；这仍可能随机发生，继续增加模拟次数通常会更稳定。";
+        elements.variationExplanation.textContent = `${rangeText}${assessment}`;
+      }
+
+      function prepareCanvas(canvas) {
+        const parent = canvas.parentElement;
+        const width = Math.max(280, parent.clientWidth);
+        const height = Math.max(220, parent.clientHeight);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(width * pixelRatio);
+        canvas.height = Math.floor(height * pixelRatio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        const context = canvas.getContext("2d");
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        context.clearRect(0, 0, width, height);
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        return { context, width, height };
+      }
+
+      function drawGrid(context, plot, yTicks = 4) {
+        context.save();
+        context.strokeStyle = colors.line;
+        context.fillStyle = colors.muted;
+        context.lineWidth = 1;
+        context.font = "11px Microsoft YaHei, sans-serif";
+        context.textAlign = "right";
+        context.textBaseline = "middle";
+        for (let tick = 0; tick <= yTicks; tick += 1) {
+          const value = tick / yTicks;
+          const y = plot.bottom - value * plot.height;
+          context.beginPath();
+          context.moveTo(plot.left, y);
+          context.lineTo(plot.right, y);
+          context.stroke();
+          context.fillText(`${Math.round(value * 100)}%`, plot.left - 9, y);
+        }
+        context.restore();
+      }
+
+      function drawComparisonChart() {
+        const { context, width, height } = prepareCanvas(elements.comparisonChart);
+        const plot = { left: 52, right: width - 22, top: 20, bottom: height - 38 };
+        plot.width = plot.right - plot.left;
+        plot.height = plot.bottom - plot.top;
+        drawGrid(context, plot);
+
+        const groupSize = state.simulation ? state.simulation.groupSize : Number(elements.groupSize.value);
+        const theoretical = state.simulation ? state.simulation.theoretical : theoreticalProbability(groupSize);
+        const simulated = state.simulation ? state.simulation.duplicates / state.simulation.totalTrials : null;
+        const values = [{ label: "理论概率", value: theoretical, color: colors.green }];
+        if (simulated !== null) values.push({ label: "模拟概率", value: simulated, color: colors.coral });
+        const barWidth = Math.min(86, plot.width / (values.length * 2.2));
+        const totalWidth = values.length * barWidth + (values.length - 1) * 42;
+        const startX = plot.left + (plot.width - totalWidth) / 2;
+
+        values.forEach((item, index) => {
+          const x = startX + index * (barWidth + 42);
+          const barHeight = item.value * plot.height;
+          const y = plot.bottom - barHeight;
+          context.fillStyle = item.color;
+          context.beginPath();
+          context.roundRect(x, y, barWidth, barHeight, [10, 10, 3, 3]);
+          context.fill();
+          context.fillStyle = colors.forest;
+          context.font = "700 13px Microsoft YaHei, sans-serif";
+          context.textAlign = "center";
+          context.fillText(formatPercent(item.value), x + barWidth / 2, Math.max(plot.top + 12, y - 10));
+          context.fillStyle = colors.muted;
+          context.font = "12px Microsoft YaHei, sans-serif";
+          context.fillText(item.label, x + barWidth / 2, plot.bottom + 24);
+        });
+
+        context.fillStyle = colors.muted;
+        context.font = "11px Microsoft YaHei, sans-serif";
+        context.textAlign = "left";
+        context.fillText(`n = ${groupSize}`, plot.left, 10);
+      }
+
+      function drawTheoryChart() {
+        const { context, width, height } = prepareCanvas(elements.theoryChart);
+        const plot = { left: 52, right: width - 22, top: 20, bottom: height - 38 };
+        plot.width = plot.right - plot.left;
+        plot.height = plot.bottom - plot.top;
+        drawGrid(context, plot);
+        const minGroup = 2;
+        const maxGroup = 80;
+        const currentGroup = Number(elements.groupSize.value);
+
+        context.strokeStyle = colors.green;
+        context.lineWidth = 3;
+        context.beginPath();
+        for (let groupSize = minGroup; groupSize <= maxGroup; groupSize += 1) {
+          const x = plot.left + ((groupSize - minGroup) / (maxGroup - minGroup)) * plot.width;
+          const y = plot.bottom - theoreticalProbability(groupSize) * plot.height;
+          if (groupSize === minGroup) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.stroke();
+
+        const currentX = plot.left + ((currentGroup - minGroup) / (maxGroup - minGroup)) * plot.width;
+        const currentValue = theoreticalProbability(currentGroup);
+        const currentY = plot.bottom - currentValue * plot.height;
+        context.setLineDash([5, 5]);
+        context.strokeStyle = colors.coral;
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.moveTo(currentX, plot.bottom);
+        context.lineTo(currentX, currentY);
+        context.stroke();
+        context.setLineDash([]);
+        context.fillStyle = colors.coral;
+        context.beginPath();
+        context.arc(currentX, currentY, 5, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = colors.forest;
+        context.font = "700 11px Microsoft YaHei, sans-serif";
+        context.textAlign = currentX > plot.left + plot.width * 0.72 ? "right" : "left";
+        context.fillText(`${currentGroup} 人 · ${formatPercent(currentValue)}`, currentX + (context.textAlign === "right" ? -8 : 8), Math.max(plot.top + 10, currentY - 9));
+
+        context.fillStyle = colors.muted;
+        context.font = "11px Microsoft YaHei, sans-serif";
+        context.textAlign = "center";
+        [2, 23, 40, 60, 80].forEach((groupSize) => {
+          const x = plot.left + ((groupSize - minGroup) / (maxGroup - minGroup)) * plot.width;
+          context.fillText(groupSize, x, plot.bottom + 22);
+        });
+      }
+
+      function drawCumulativeChart() {
+        const { context, width, height } = prepareCanvas(elements.cumulativeChart);
+        const plot = { left: 52, right: width - 22, top: 20, bottom: height - 40 };
+        plot.width = plot.right - plot.left;
+        plot.height = plot.bottom - plot.top;
+        drawGrid(context, plot);
+
+        if (!state.simulation) {
+          context.fillStyle = colors.muted;
+          context.font = "14px Microsoft YaHei, sans-serif";
+          context.textAlign = "center";
+          context.fillText("运行模拟后显示累计频率", width / 2, height / 2);
+          return;
+        }
+
+        const result = state.simulation;
+        const maxTrial = result.totalTrials;
+        const theoreticalY = plot.bottom - result.theoretical * plot.height;
+        context.strokeStyle = colors.gold;
+        context.lineWidth = 2;
+        context.setLineDash([7, 6]);
+        context.beginPath();
+        context.moveTo(plot.left, theoreticalY);
+        context.lineTo(plot.right, theoreticalY);
+        context.stroke();
+        context.setLineDash([]);
+        context.fillStyle = colors.gold;
+        context.font = "700 11px Microsoft YaHei, sans-serif";
+        context.textAlign = "right";
+        context.fillText(`理论 ${formatPercent(result.theoretical)}`, plot.right, theoreticalY - 8);
+
+        context.strokeStyle = colors.coral;
+        context.lineWidth = 2.5;
+        context.beginPath();
+        result.cumulative.forEach((point, index) => {
+          const x = plot.left + (point.trial / maxTrial) * plot.width;
+          const y = plot.bottom - point.frequency * plot.height;
+          if (index === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        });
+        context.stroke();
+
+        const last = result.cumulative[result.cumulative.length - 1];
+        const lastX = plot.right;
+        const lastY = plot.bottom - last.frequency * plot.height;
+        context.fillStyle = colors.coral;
+        context.beginPath();
+        context.arc(lastX, lastY, 4.5, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = colors.muted;
+        context.font = "11px Microsoft YaHei, sans-serif";
+        context.textAlign = "center";
+        [0, 0.25, 0.5, 0.75, 1].forEach((ratio) => {
+          const x = plot.left + ratio * plot.width;
+          context.fillText(formatNumber(Math.round(maxTrial * ratio)), x, plot.bottom + 23);
+        });
+        context.textAlign = "right";
+        context.fillText("实验次数", plot.right, height - 3);
+      }
+
+      function drawAllCharts() {
+        drawComparisonChart();
+        drawTheoryChart();
+        drawCumulativeChart();
+      }
+
+      function renderPairExploration() {
+        const groupSize = Number(elements.pairSize.value);
+        const pairCount = groupSize * (groupSize - 1) / 2;
+        elements.pairSizeOutput.textContent = `${groupSize} 人`;
+        elements.pairCount.textContent = formatNumber(pairCount);
+        elements.pairFormula.textContent = `C(${groupSize}, 2) = ${groupSize} × ${groupSize - 1} ÷ 2 = ${formatNumber(pairCount)} 对`;
+        elements.pairCaption.textContent = `示意显示部分连线；实际共有 ${formatNumber(pairCount)} 对`;
+
+        const visiblePeople = Math.min(groupSize, 18);
+        const lineLimit = 90;
+        const fragment = document.createDocumentFragment();
+        const positions = [];
+        for (let index = 0; index < visiblePeople; index += 1) {
+          const angle = -Math.PI / 2 + index / visiblePeople * Math.PI * 2;
+          const x = 50 + Math.cos(angle) * 43;
+          const y = 50 + Math.sin(angle) * 43;
+          positions.push({ x, y });
+        }
+
+        let linesDrawn = 0;
+        for (let first = 0; first < visiblePeople && linesDrawn < lineLimit; first += 1) {
+          for (let second = first + 1; second < visiblePeople && linesDrawn < lineLimit; second += 1) {
+            const start = positions[first];
+            const end = positions[second];
+            const deltaX = end.x - start.x;
+            const deltaY = end.y - start.y;
+            const line = document.createElement("span");
+            line.className = "pair-line";
+            line.style.left = `${start.x}%`;
+            line.style.top = `${start.y}%`;
+            line.style.width = `${Math.hypot(deltaX, deltaY)}%`;
+            line.style.height = "1px";
+            line.style.transformOrigin = "left center";
+            line.style.transform = `rotate(${Math.atan2(deltaY, deltaX)}rad)`;
+            line.style.background = "rgba(231,133,104,0.25)";
+            fragment.append(line);
+            linesDrawn += 1;
+          }
+        }
+
+        positions.forEach((position) => {
+          const dot = document.createElement("span");
+          dot.className = "pair-dot";
+          dot.style.left = `${position.x}%`;
+          dot.style.top = `${position.y}%`;
+          fragment.append(dot);
+        });
+        elements.pairRing.replaceChildren(fragment);
+      }
+
+      function bindEvents() {
+        elements.runSingle.addEventListener("click", runSingleExperiment);
+        elements.singleSize.addEventListener("input", () => {
+          elements.singleSizeOutput.textContent = `${elements.singleSize.value} 人`;
+        });
+        elements.singleSize.addEventListener("change", runSingleExperiment);
+        elements.groupSize.addEventListener("input", updateTheoryDisplay);
+        elements.runSimulation.addEventListener("click", runRepeatedSimulation);
+        elements.pairSize.addEventListener("input", renderPairExploration);
+        window.addEventListener("resize", () => {
+          window.clearTimeout(state.resizeTimer);
+          state.resizeTimer = window.setTimeout(drawAllCharts, 120);
+        });
+      }
+
+      async function initialize() {
+        bindEvents();
+        runSingleExperiment();
+        updateTheoryDisplay();
+        renderPairExploration();
+        drawAllCharts();
+        await runRepeatedSimulation();
+      }
+
+      initialize();
+    })();
+  </script>
+</body>
+</html>
